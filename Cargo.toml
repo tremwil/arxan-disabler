@@ -1,0 +1,19 @@
+[package]
+name = "dsr-arxan-disabler"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+pelite = "0.10"
+iced-x86 = "1.21"
+memchr = "2.7.4"
+fxhash = "0.2.1"
+byteorder = "1.5.0"
+smallvec = "1.14"
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
