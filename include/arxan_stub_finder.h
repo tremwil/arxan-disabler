@@ -7,12 +7,6 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef _MSC_VER
-#define ARXAN_STUB_FINDER_DLLIMPORT __declspec(dllimport)
-#else
-#define ARXAN_STUB_FINDER_DLLIMPORT
-#endif
-
 /// @brief Describes a code patch which skips an obfuscated Arxan stub.
 typedef struct _ArxanStubPatchInfo {
     /// @brief Virtual address at which to install the hook.
@@ -40,7 +34,7 @@ typedef void (*ArxanStubCallback)(
 /// @param callback Callback which receives the patch details for each patch.
 /// @param user_context User context object
 /// @return 
-extern "C" ARXAN_STUB_FINDER_DLLIMPORT void find_arxan_stubs(
+extern "C" void find_arxan_stubs(
     const uint8_t* image_base,
     ArxanStubCallback callback,
     void* user_context
