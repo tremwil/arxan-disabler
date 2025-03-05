@@ -4,7 +4,10 @@ use std::ffi::c_void;
 
 use iced_x86::{Mnemonic, Register};
 use memchr::memmem;
-use pelite::pe64::{Pe, PeView};
+use pelite::{
+    pe::PeObject,
+    pe64::{Pe, PeView},
+};
 use stub_patch::StubPatch;
 use vm::{memory::MemoryStore, registers::Registers, ProgramState};
 
@@ -36,7 +39,6 @@ pub type ArxanStubCallback = unsafe extern "C" fn(*mut c_void, *const ArxanStubP
 #[no_mangle]
 pub unsafe extern "C" fn find_arxan_stubs(
     image_base: *const u8,
-    image_size: usize,
     callback: ArxanStubCallback,
     user_context: *mut c_void,
 ) {
@@ -51,11 +53,10 @@ pub unsafe extern "C" fn find_arxan_stubs(
         Register::R11,
     ];
 
-    let pe_bytes = unsafe { std::slice::from_raw_parts(image_base, image_size) };
-    let pe = PeView::from_bytes(pe_bytes).unwrap();
+    let pe = unsafe { PeView::module(image_base) };
     let base = pe.optional_header().ImageBase;
     let test_rsp_rvas: Vec<_> =
-        memmem::find_iter(&pe_bytes, b"\x48\xf7\xc4\x0f\x00\x00\x00").collect();
+        memmem::find_iter(pe.image(), b"\x48\xf7\xc4\x0f\x00\x00\x00").collect();
 
     for test_rsp_rva in test_rsp_rvas {
         let state = ProgramState {
@@ -81,18 +82,14 @@ pub unsafe extern "C" fn find_arxan_stubs(
             if step.state.registers.rsp() == Some(INIT_RSP + 8) {
                 let exit_stub_addr = step.state.rip.unwrap();
                 let mut stack_state = Vec::new();
-                let mut rsp_adjust = 0;
                 step.state
                     .memory
                     .known_slices(INIT_RSP + 8, 0x200, |addr, slice| {
-                        let offset = addr - INIT_RSP;
-                        stack_state.push((offset, slice.to_owned()));
-                        rsp_adjust = offset + slice.len() as u64;
+                        stack_state.push((addr - INIT_RSP, slice.to_owned()));
                     });
 
                 patch = Some(StubPatch {
                     exit_stub_addr,
-                    rsp_adjust: rsp_adjust.try_into().unwrap(),
                     stack_state,
                 });
                 return Some(None);
@@ -105,7 +102,7 @@ pub unsafe extern "C" fn find_arxan_stubs(
 
             // If it jumps outside of the range, assume it was a function call and perform a return
             match (step.state.rip, step.state.registers.rsp_mut()) {
-                (Some(rip), Some(rsp)) if rip.wrapping_sub(base) > pe_bytes.len() as u64 => {
+                (Some(rip), Some(rsp)) if rip.wrapping_sub(base) > pe.image().len() as u64 => {
                     step.state.rip = step.state.memory.read_int(*rsp, 8);
                     *rsp = rsp.wrapping_add(8);
                     // Clear volatile registers

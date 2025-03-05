@@ -5,7 +5,6 @@ use iced_x86::{
 
 pub(crate) struct StubPatch {
     pub exit_stub_addr: u64,
-    pub rsp_adjust: u32,
     pub stack_state: Vec<(u64, Vec<u8>)>,
 }
 
@@ -56,7 +55,7 @@ impl StubPatch {
 
         // Final RSP adjustment and jump sequence
         instructions.extend_from_slice(&[
-            Instruction::with2(Code::Add_rm64_imm32, Register::RSP, self.rsp_adjust)?,
+            Instruction::with2(Code::Add_rm64_imm8, Register::RSP, 8u32)?,
             Instruction::with2(Code::Mov_r64_imm64, Register::RAX, self.exit_stub_addr)?,
             Instruction::with1(Code::Jmp_rm64, Register::RAX)?,
         ]);

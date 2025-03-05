@@ -36,15 +36,12 @@ typedef void (*ArxanStubCallback)(
 );
 
 /// @brief Finds all Arxan stubs in the given memory-mapped PE image.
-/// @param image_base Base of the PE image.
-/// @param image_size Size of the memory image. If running on a module at runtime,
-/// use `GetModuleInformation` to recover its size.
+/// @param image_base Base of the PE image, can be obtained using `GetModuleHandle` at runtime.
 /// @param callback Callback which receives the patch details for each patch.
 /// @param user_context User context object
 /// @return 
 extern "C" ARXAN_STUB_FINDER_DLLIMPORT void find_arxan_stubs(
-    const uint8_t* image_base, 
-    size_t image_size,
+    const uint8_t* image_base,
     ArxanStubCallback callback,
     void* user_context
 );

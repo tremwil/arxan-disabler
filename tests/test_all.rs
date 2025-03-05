@@ -28,12 +28,7 @@ fn test_all() -> Result<(), Box<dyn Error>> {
     }
 
     unsafe {
-        find_arxan_stubs(
-            program_bytes.as_ptr(),
-            program_bytes.len(),
-            callback,
-            std::ptr::null_mut(),
-        );
+        find_arxan_stubs(program_bytes.as_ptr(), callback, std::ptr::null_mut());
     }
 
     log::info!("Analysis time (excluding disk ops): {:?}", now.elapsed());
