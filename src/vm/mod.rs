@@ -27,15 +27,19 @@ pub struct ProgramState<'a> {
 pub struct PastFork<'a> {
     pub state: ProgramState<'a>,
     pub visited: FxIndexSet<u64>,
+    pub branch_count: usize,
 }
 
 pub struct RunStep<'a, 'b> {
+    pub depth: usize,
     pub next_instruction: &'b mut Instruction,
     pub info_factory: &'b mut InstructionInfoFactory,
     pub state: &'b mut ProgramState<'a>,
     pub visited: &'b mut FxIndexSet<u64>,
     pub past_forks: &'b mut [PastFork<'a>],
 }
+
+pub type MaybeFork<'a> = Option<ProgramState<'a>>;
 
 impl<'a> ProgramState<'a> {
     pub fn with_rip(image: PeView<'a>, rip: u64) -> Self {
@@ -48,7 +52,7 @@ impl<'a> ProgramState<'a> {
 
     pub fn run<F>(self, mut on_step: F)
     where
-        F: for<'b> FnMut(RunStep<'a, 'b>) -> Option<Option<ProgramState<'a>>>,
+        F: for<'b> FnMut(RunStep<'a, 'b>) -> Option<MaybeFork<'a>>,
     {
         let pe = self.memory.image();
         let base = pe.optional_header().ImageBase;
@@ -61,12 +65,17 @@ impl<'a> ProgramState<'a> {
         let mut fork_stack = vec![PastFork {
             state: self,
             visited: FxIndexSet::<u64>::default(),
+            branch_count: 0,
         }];
 
         while !fork_stack.is_empty() {
             let depth = fork_stack.len() - 1;
             let (past_forks, tail) = fork_stack.split_at_mut(depth);
-            let PastFork { state, visited } = &mut tail[0];
+            let PastFork {
+                state,
+                visited,
+                branch_count,
+            } = &mut tail[0];
 
             #[rustfmt::skip]
             let was_visited = state.rip.map(|ip| {
@@ -97,6 +106,7 @@ impl<'a> ProgramState<'a> {
             decoder.decode_out(&mut instruction);
 
             let run_step = RunStep {
+                depth: *branch_count,
                 next_instruction: &mut instruction,
                 info_factory: &mut info_factory,
                 state,
@@ -106,12 +116,17 @@ impl<'a> ProgramState<'a> {
             if let Some(forked) = on_step(run_step)
                 .unwrap_or_else(|| state.update_state(&instruction, &mut info_factory))
             {
+                // Increment branch count
+                *branch_count += 1;
+                let branch_count = *branch_count;
+
                 // Split visited state into shared stack to allow both programs to progress
                 // independently
                 shared_visit_state.push(std::mem::take(visited));
                 fork_stack.push(PastFork {
                     state: forked,
                     visited: Default::default(),
+                    branch_count,
                 });
             }
         }
@@ -121,7 +136,7 @@ impl<'a> ProgramState<'a> {
         &mut self,
         instr: &Instruction,
         info_factory: &mut InstructionInfoFactory,
-    ) -> Option<ProgramState<'a>> {
+    ) -> MaybeFork<'a> {
         // Address populated by custom flow control driven by per-mnemonic logic
         let mut flow_override = None;
 
@@ -153,20 +168,26 @@ impl<'a> ProgramState<'a> {
                 let _ = self.set_operand_value(instr, 0, result);
             }
             Mnemonic::Push => {
-                self.adjust_rsp(instr.stack_pointer_increment());
-                if let Some(rsp) = self.registers.rsp() {
+                if self.registers.rsp().is_some() {
+                    // Careful! To handle the `push rsp` case, we need to resolve the operand before
+                    // adjusting rsp
                     let pushed_value = self
                         .get_operand_value(instr, 0)
                         .map(|v| util::reinterpret_signed(v, util::op_size(instr, 0)) as u64);
-                    self.memory.write_int(rsp, pushed_value, 8);
+
+                    let rsp = self.registers.rsp_mut().as_mut().unwrap();
+                    *rsp = rsp.wrapping_add_signed(instr.stack_pointer_increment() as i64);
+                    self.memory.write_int(*rsp, pushed_value, 8);
                 }
             }
             Mnemonic::Pop => {
-                if let Some(rsp) = self.registers.rsp() {
-                    let popped_value = self.memory.read_int(rsp, util::op_size(instr, 0));
+                if let Some(rsp) = self.registers.rsp_mut() {
+                    let popped_value = self.memory.read_int(*rsp, util::op_size(instr, 0));
+                    // Careful! To handle the `pop rsp` case, we need to increment rsp before
+                    // writing to the register
+                    *rsp = rsp.wrapping_add_signed(instr.stack_pointer_increment() as i64);
                     let _ = self.set_operand_value(instr, 0, popped_value);
                 }
-                self.adjust_rsp(instr.stack_pointer_increment());
             }
             Mnemonic::Call => {
                 flow_override = self.get_operand_value(instr, 0);

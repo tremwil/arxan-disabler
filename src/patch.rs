@@ -3,20 +3,31 @@ use iced_x86::{
     MemoryOperand, Register,
 };
 
-pub(crate) struct StubPatch {
-    pub exit_stub_addr: u64,
-    pub stack_state: Vec<(u64, Vec<u8>)>,
+#[derive(Debug, Clone, Copy)]
+pub struct ReturnGadgets {
+    pub stack_offset: u64,
+    pub bytes: [u8; Self::GADGET_BYTES],
+}
+impl ReturnGadgets {
+    pub const GADGET_BYTES: usize = 24;
 }
 
-impl StubPatch {
+#[derive(Debug)]
+pub struct StubPatchInfo {
+    pub exit_stub_addr: u64,
+    pub return_gadgets: Option<ReturnGadgets>,
+}
+
+impl StubPatchInfo {
     pub fn assemble(&self) -> Result<Vec<u8>, IcedError> {
         let mut instructions = Vec::new();
 
         // Generate code to copy known stack state onto the stack
-        for (offset, stack_block) in self.stack_state.iter() {
+        if let Some(rg) = self.return_gadgets {
+            let offset = rg.stack_offset;
             let mut i = 0;
             loop {
-                let remaining = stack_block.len() as u64 - i;
+                let remaining = rg.bytes.len() as u64 - i;
                 let src_mem = MemoryOperand::with_base_displ(Register::RIP, (offset + i) as i64);
                 let dst_mem = MemoryOperand::with_base_displ(Register::RSP, (offset + i) as i64);
                 instructions.extend(match remaining {
@@ -61,10 +72,10 @@ impl StubPatch {
         ]);
 
         // Store stack data after the code block
-        for (offset, stack_block) in self.stack_state.iter() {
-            instructions.extend(stack_block.iter().enumerate().map(|(i, &b)| {
+        if let Some(rg) = self.return_gadgets {
+            instructions.extend(rg.bytes.iter().enumerate().map(|(i, &b)| {
                 let mut instr = Instruction::with_declare_byte_1(b);
-                instr.set_ip(offset + i as u64);
+                instr.set_ip(rg.stack_offset + i as u64);
                 instr
             }));
         }
