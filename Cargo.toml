@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["dylibs/dsr", "launcher"]
+members = ["dll", "launcher"]
 
 [workspace.package]
 authors = ["William Tremblay"]

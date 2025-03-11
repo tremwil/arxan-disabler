@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     .unwrap();
 
     std::process::Command::new("cargo")
-        .args(["build", "--release", "-p", "arxan-disabler-dsr"])
+        .args(["build", "--release", "-p", "arxan-disabler-dll"])
         .status()?;
 
     let game_path = PathBuf::from(dotenvy_macro::dotenv!("LAUNCHER_GAME_PATH"));
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let dll_path = current_dir()?
         .join("target")
         .join("release")
-        .join("arxan_disabler_dsr.dll");
+        .join("arxan_disabler_dll.dll");
 
     log::info!("Game path: {}", game_path.to_string_lossy());
     log::info!("DLL path: {}", dll_path.to_string_lossy());

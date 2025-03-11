@@ -1,6 +1,6 @@
 [package]
-name = "arxan-disabler-dsr"
-description = "Neuters Arxan in Dark Souls Remastered 1.3.1"
+name = "arxan-disabler-dll"
+description = "Neuters Arxan in various FromSoftware titles"
 authors.workspace = true
 edition.workspace = true
 
@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 log.workspace = true
 simplelog.workspace = true
 windows.workspace = true
-arxan-disabler = { path = "../..", version = "0.1.0", features = ["disabler-debug"] }
+arxan-disabler = { path = "..", version = "0.1.0", features = ["disabler-debug"] }
