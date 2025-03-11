@@ -102,7 +102,7 @@ macro_rules! ffi_impl {
             use std::ffi::c_void;
 
             #[no_mangle]
-            unsafe extern "C" fn $ffi_disable(
+            pub unsafe extern "C" fn $ffi_disable(
                 callback: unsafe extern "C" fn(*mut c_void),
                 context: *mut c_void,
             ) {
@@ -115,7 +115,7 @@ macro_rules! ffi_impl {
             }
 
             #[no_mangle]
-            unsafe extern "C" fn $ffi_patch() {
+            pub unsafe extern "C" fn $ffi_patch() {
                 unsafe { <$disabler as $crate::disabler::ArxanDisabler>::patch_stubs() }
             }
         }
