@@ -29,6 +29,7 @@ pub unsafe extern "system" fn DllMain(
         )
         .unwrap();
 
+        std::env::set_var("SteamAppId", "480");
         DSRArxanDisabler::disable(|| {
             log::info!("Arxan disabled");
 

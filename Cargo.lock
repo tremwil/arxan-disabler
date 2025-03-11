@@ -7,8 +7,6 @@ name = "arxan-disabler"
 version = "0.1.0"
 dependencies = [
  "bitvec",
- "dll-syringe",
- "dotenv",
  "fxhash",
  "iced-x86",
  "indexmap",
@@ -147,12 +145,6 @@ dependencies = [
  "widestring",
  "winapi",
 ]
-
-[[package]]
-name = "dotenv"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "dotenvy"

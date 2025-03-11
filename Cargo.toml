@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
-members = ["dylibs/dsr", "dylibs/launcher"]
-default-members = ["dylibs/launcher"]
+members = [".", "dylibs/dsr", "dylibs/launcher"]
+default-members = [".", "dylibs/launcher"]
 
 [workspace.package]
 authors = ["William Tremblay"]
@@ -52,9 +52,7 @@ features = [
 ]
 
 [dev-dependencies]
-simplelog = "0.12"
-dotenv = "0.15"
-dll-syringe = "0.15"
+simplelog = "0.12.2"
 
 [profile.release]
 opt-level = 3
