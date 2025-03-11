@@ -1,17 +1,16 @@
-use std::{env, error::Error, time::Instant};
+use std::{error::Error, time::Instant};
 
-use dotenv::dotenv;
-
-use dsr_arxan_disabler::spider;
+use arxan_disabler::spider;
 use simplelog::*;
 
 #[cfg(feature = "ffi")]
 #[test]
-fn test_ffi() -> Result<(), Box<dyn Error>> {
-    use dsr_arxan_disabler::ffi;
-    use std::ffi::c_void;
-
-    dotenv()?;
+fn test_spider_ffi() -> Result<(), Box<dyn Error>> {
+    use arxan_disabler::ffi;
+    use std::{
+        ffi::c_void,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
 
     TermLogger::init(
         LevelFilter::Info,
@@ -20,12 +19,18 @@ fn test_ffi() -> Result<(), Box<dyn Error>> {
         ColorChoice::Auto,
     )?;
 
-    let program_bytes = std::fs::read(env::var("DUMP_PATH")?)?;
+    let program_bytes = std::fs::read("tests/bin/dsr_1.3.1_dump.bin")?;
     let now = Instant::now();
 
+    static NUM_CHECKS: AtomicUsize = AtomicUsize::new(0);
+    static NUM_FAILED: AtomicUsize = AtomicUsize::new(0);
+
     unsafe extern "C" fn callback(_: *mut c_void, info: *const ffi::ArxanStubPatchInfo) {
+        NUM_CHECKS.fetch_add(1, Ordering::Relaxed);
+
         let info = &*info;
         if !info.success {
+            NUM_FAILED.fetch_add(1, Ordering::Relaxed);
             log::error!("Hook generation failed for {:016x}", info.hook_address);
             return;
         }
@@ -39,13 +44,19 @@ fn test_ffi() -> Result<(), Box<dyn Error>> {
 
     log::info!("Analysis time (excluding disk ops): {:?}", now.elapsed());
 
-    Ok(())
+    let (num_failed, num_checks) = (
+        NUM_FAILED.load(Ordering::Relaxed),
+        NUM_CHECKS.load(Ordering::Relaxed),
+    );
+    log::info!("{}/{} failed", num_failed, num_checks);
+
+    (num_failed == 0)
+        .then_some(())
+        .ok_or("Failed to compute patch for all stubs".into())
 }
 
 #[test]
-fn test_rust() -> Result<(), Box<dyn Error>> {
-    dotenv()?;
-
+fn test_spider_rust() -> Result<(), Box<dyn Error>> {
     TermLogger::init(
         LevelFilter::Info,
         Config::default(),
@@ -53,7 +64,7 @@ fn test_rust() -> Result<(), Box<dyn Error>> {
         ColorChoice::Auto,
     )?;
 
-    let program_bytes = std::fs::read(env::var("DUMP_PATH")?)?;
+    let program_bytes = std::fs::read("tests/bin/dsr_1.3.1_dump.bin")?;
     let now = Instant::now();
 
     let pe = pelite::pe64::PeView::from_bytes(&program_bytes)?;

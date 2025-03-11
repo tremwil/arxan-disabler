@@ -142,10 +142,11 @@ impl<'a> Spider<'a> {
 
 pub fn find_arxan_stubs(pe: PeView<'_>, mut callback: impl FnMut(u64, Option<StubPatchInfo>)) {
     let base = pe.optional_header().ImageBase;
-    let test_rsp_rvas: Vec<_> =
-        memmem::find_iter(pe.image(), b"\x48\xf7\xc4\x0f\x00\x00\x00").collect();
 
-    for &test_rsp_rva in test_rsp_rvas.iter() {
+    // Search for TEST rsp, 15 instructions
+    // These are extremely unlikely to be emitted by a compiler, but are present once at the
+    // beginning of each Arxan stub
+    for test_rsp_rva in memmem::find_iter(pe.image(), b"\x48\xf7\xc4\x0f\x00\x00\x00") {
         let hook_address = base + test_rsp_rva as u64;
 
         let state = ProgramState {

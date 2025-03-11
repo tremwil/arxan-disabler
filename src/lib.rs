@@ -3,6 +3,9 @@
 #[cfg(feature = "ffi")]
 pub mod ffi;
 
+#[cfg(feature = "disabler")]
+pub mod disabler;
+
 pub mod patch;
 pub mod spider;
 pub mod vm;

@@ -1,0 +1,12 @@
+[package]
+name = "arxan-disabler-launcher"
+description = "Launch FromSoftware games without Arxan"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+log.workspace = true
+simplelog.workspace = true
+windows.workspace = true
+dll-syringe = "0.15"
+dotenvy_macro = "0.15"

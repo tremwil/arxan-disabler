@@ -10,11 +10,11 @@ extern "C" {
 /// @brief Describes a code patch which skips an obfuscated Arxan stub.
 typedef struct _ArxanStubPatchInfo {
     /// @brief Virtual address at which to install the hook.
-    /// The instruction at this address can be overwritten.
+    /// The instruction at this address should be overwritten with a jump to the hook code.
     uint64_t hook_address;
     /// @brief Pointer to the hook's bytecode.
-    /// @warning is limited to the stack frame of the callback function. Write 
-    /// the bytes somewhere else to store them.
+    /// @warning lifetime is limited to the stack frame of the callback function receiving
+    /// this struct. Write the bytes somewhere else to store them.
     const uint8_t* hook_code;
     /// @brief Size of the hook's bytecode.
     size_t hook_code_size;
@@ -33,8 +33,7 @@ typedef void (*ArxanStubCallback)(
 /// @param image_base Base of the PE image, can be obtained using `GetModuleHandle` at runtime.
 /// @param callback Callback which receives the patch details for each patch.
 /// @param user_context User context object
-/// @return 
-extern "C" void find_arxan_stubs(
+void find_arxan_stubs(
     const uint8_t* image_base,
     ArxanStubCallback callback,
     void* user_context

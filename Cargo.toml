@@ -1,34 +1,42 @@
-[package]
-name = "dsr-arxan-disabler"
-version = "0.1.0"
+[workspace]
+resolver = "2"
+members = ["dylibs/dsr", "dylibs/launcher"]
+default-members = ["dylibs/launcher"]
+
+[workspace.package]
+authors = ["William Tremblay"]
 edition = "2021"
 
-[lib]
-crate-type = ["staticlib", "rlib"]
+[package]
+name = "arxan-disabler"
+authors.workspace = true
+edition.workspace = true
+description = "Neuters Arxan in FromSoftware titles"
+version = "0.1.0"
 
-[[example]]
-name = "dsr-arxan-disabler"
-crate-type = ["cdylib"]
+[lib]
+crate-type = ["rlib", "staticlib"]
 
 [features]
 ffi = []
+disabler = ["windows"]
+disabler-debug = ["disabler"]
 
 [dependencies]
+windows = { workspace = true, optional = true }
+log.workspace = true
 pelite = "0.10"
 iced-x86 = "1.21"
 memchr = "2.7.4"
 fxhash = "0.2.1"
 indexmap = "2.7.1"
-byteorder = "1.5.0"
 bitvec = "1.0"
+
+[workspace.dependencies]
 log = "0.4"
-simplelog = "0.12"
+simplelog = "0.12.2"
 
-[dev-dependencies]
-dotenv = "0.15"
-dll-syringe = "0.15"
-
-[dev-dependencies.windows]
+[workspace.dependencies.windows]
 version = "0.60"
 features = [
     "Win32_System_Kernel",
@@ -42,6 +50,11 @@ features = [
     "Win32_System_SystemServices",
     "Win32_System_Console"
 ]
+
+[dev-dependencies]
+simplelog = "0.12"
+dotenv = "0.15"
+dll-syringe = "0.15"
 
 [profile.release]
 opt-level = 3

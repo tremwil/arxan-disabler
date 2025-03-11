@@ -4,6 +4,7 @@ use std::{
     ffi::CString,
     os::windows::io::{FromRawHandle, OwnedHandle},
     path::PathBuf,
+    ptr::null_mut,
     time::Duration,
 };
 
@@ -13,14 +14,19 @@ use dll_syringe::{
 };
 use windows::{
     core::PCSTR,
-    Win32::System::Threading::{
-        CreateProcessA, ResumeThread, WaitForSingleObject, CREATE_SUSPENDED, DETACHED_PROCESS,
-        PROCESS_INFORMATION, STARTUPINFOA,
+    Win32::{
+        Security::SECURITY_ATTRIBUTES,
+        System::{
+            Console::{GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE},
+            Threading::{
+                CreateProcessA, ResumeThread, WaitForSingleObject, CREATE_SUSPENDED,
+                DETACHED_PROCESS, PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOA,
+            },
+        },
     },
 };
 
-#[test]
-fn test_dll() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     simplelog::TermLogger::init(
         simplelog::LevelFilter::Debug,
         simplelog::Config::default(),
@@ -29,13 +35,11 @@ fn test_dll() -> Result<(), Box<dyn Error>> {
     )
     .unwrap();
 
-    dotenv::dotenv()?;
-
     std::process::Command::new("cargo")
-        .args(["build", "--release", "--example", "dsr-arxan-disabler"])
+        .args(["build", "--release", "-p", "arxan-disabler-dsr"])
         .output()?;
 
-    let game_path = PathBuf::from(std::env::var("GAME_PATH")?);
+    let game_path = PathBuf::from(dotenvy_macro::dotenv!("LAUNCHER_GAME_PATH"));
     let game_path_cstr = CString::new(game_path.as_os_str().to_str().unwrap())?;
 
     let game_dir = game_path.parent().unwrap();
@@ -44,13 +48,14 @@ fn test_dll() -> Result<(), Box<dyn Error>> {
     let dll_path = current_dir()?
         .join("target")
         .join("release")
-        .join("examples")
-        .join("dsr_arxan_disabler.dll");
+        .join("arxan_disabler_dsr.dll");
 
     log::info!("Game path: {}", game_path.to_string_lossy());
     log::info!("DLL path: {}", dll_path.to_string_lossy());
 
-    let startup = STARTUPINFOA::default();
+    let mut startup = STARTUPINFOA::default();
+    startup.cb = size_of::<STARTUPINFOA>().try_into()?;
+
     let mut proc_info = PROCESS_INFORMATION::default();
 
     let proc = unsafe {
@@ -59,8 +64,8 @@ fn test_dll() -> Result<(), Box<dyn Error>> {
             None,
             None,
             None,
-            false,
-            CREATE_SUSPENDED | DETACHED_PROCESS,
+            true,
+            CREATE_SUSPENDED,
             None,
             PCSTR(game_dir_cstr.as_ptr() as *const _),
             &startup,
@@ -72,15 +77,12 @@ fn test_dll() -> Result<(), Box<dyn Error>> {
     };
 
     log::info!("Created game process. PID = {}", proc_info.dwProcessId);
+    log::info!("Injecting DLL");
 
     let syringe = Syringe::for_process(proc.try_clone()?);
     let _ = syringe.inject(dll_path)?;
 
-    log::info!("DLL injected");
-
-    std::thread::sleep(Duration::from_secs(15));
-
-    log::info!("Resuming process...");
+    log::info!("DLL injected, resuming process. Output will appear below");
 
     unsafe {
         ResumeThread(proc_info.hThread);
