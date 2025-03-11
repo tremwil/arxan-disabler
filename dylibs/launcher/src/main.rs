@@ -4,8 +4,6 @@ use std::{
     ffi::CString,
     os::windows::io::{FromRawHandle, OwnedHandle},
     path::PathBuf,
-    ptr::null_mut,
-    time::Duration,
 };
 
 use dll_syringe::{
@@ -14,15 +12,9 @@ use dll_syringe::{
 };
 use windows::{
     core::PCSTR,
-    Win32::{
-        Security::SECURITY_ATTRIBUTES,
-        System::{
-            Console::{GetStdHandle, STD_ERROR_HANDLE, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE},
-            Threading::{
-                CreateProcessA, ResumeThread, WaitForSingleObject, CREATE_SUSPENDED,
-                DETACHED_PROCESS, PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOA,
-            },
-        },
+    Win32::System::Threading::{
+        CreateProcessA, ResumeThread, WaitForSingleObject, CREATE_SUSPENDED, PROCESS_INFORMATION,
+        STARTUPINFOA,
     },
 };
 
@@ -53,9 +45,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     log::info!("Game path: {}", game_path.to_string_lossy());
     log::info!("DLL path: {}", dll_path.to_string_lossy());
 
-    let mut startup = STARTUPINFOA::default();
-    startup.cb = size_of::<STARTUPINFOA>().try_into()?;
-
+    let startup = STARTUPINFOA {
+        cb: size_of::<STARTUPINFOA>().try_into()?,
+        ..Default::default()
+    };
     let mut proc_info = PROCESS_INFORMATION::default();
 
     let proc = unsafe {
