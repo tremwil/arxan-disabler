@@ -13,8 +13,8 @@ use dll_syringe::{
 use windows::{
     core::PCSTR,
     Win32::System::Threading::{
-        CreateProcessA, ResumeThread, WaitForSingleObject, CREATE_SUSPENDED, PROCESS_INFORMATION,
-        STARTUPINFOA,
+        CreateProcessA, ResumeThread, WaitForSingleObject, CREATE_SUSPENDED, INFINITE,
+        PROCESS_INFORMATION, STARTUPINFOA,
     },
 };
 
@@ -79,7 +79,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     unsafe {
         ResumeThread(proc_info.hThread);
-        WaitForSingleObject(proc_info.hProcess, 100000000);
+        WaitForSingleObject(proc_info.hProcess, INFINITE);
     }
 
     Ok(())
