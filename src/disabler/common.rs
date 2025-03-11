@@ -4,8 +4,6 @@ use std::{
     sync::{atomic::AtomicBool, LazyLock, Mutex},
 };
 
-use fxhash::FxHashSet;
-use iced_x86::{BlockEncoder, BlockEncoderOptions, Code, Instruction, InstructionBlock, Register};
 use pelite::{
     pe::{Pe, PeObject},
     pe64::PeView,
@@ -17,6 +15,11 @@ use windows::{
         Memory::{VirtualProtect, PAGE_EXECUTE_READWRITE},
     },
 };
+
+#[cfg(feature = "disabler-debug")]
+use fxhash::FxHashSet;
+#[cfg(feature = "disabler-debug")]
+use iced_x86::{BlockEncoder, BlockEncoderOptions, Code, Instruction, InstructionBlock, Register};
 
 use crate::{patch::StubPatchInfo, spider::find_arxan_stubs};
 
