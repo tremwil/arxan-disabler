@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     std::process::Command::new("cargo")
         .args(["build", "--release", "-p", "arxan-disabler-dsr"])
-        .output()?;
+        .status()?;
 
     let game_path = PathBuf::from(dotenvy_macro::dotenv!("LAUNCHER_GAME_PATH"));
     let game_path_cstr = CString::new(game_path.as_os_str().to_str().unwrap())?;
