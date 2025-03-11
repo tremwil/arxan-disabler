@@ -1,5 +1,5 @@
 [package]
-name = "arxan-disabler-launcher"
+name = "launcher"
 description = "Launch FromSoftware games without Arxan"
 authors.workspace = true
 edition.workspace = true
