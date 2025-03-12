@@ -1,9 +1,12 @@
 use std::{ffi::c_void, ptr::dangling};
 
+use crate::spider;
 use pelite::pe64::PeView;
 
-use crate::spider;
-
+/// FFI-compatible version of [`StubPatchInfo`][crate::patch::StubPatchInfo].
+///
+/// Only contains the hook address (address of the TEST RSP instruction) and the
+/// assembled patch bytes.
 #[derive(Debug)]
 #[repr(C)]
 pub struct ArxanStubPatchInfo {
@@ -13,8 +16,10 @@ pub struct ArxanStubPatchInfo {
     pub success: bool,
 }
 
+/// Callback signature receiving Arxan stub information.
 pub type ArxanStubCallback = unsafe extern "C" fn(*mut c_void, *const ArxanStubPatchInfo);
 
+/// FFI version of [`spider::find_arxan_stubs`]
 #[no_mangle]
 pub unsafe extern "C" fn find_arxan_stubs(
     image_base: *const u8,

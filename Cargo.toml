@@ -5,11 +5,15 @@ members = ["dll", "launcher"]
 [workspace.package]
 authors = ["William Tremblay"]
 edition = "2021"
+license = "MIT"
+license-file = "LICENSE.txt"
+repository = "https://github.com/tremwil/arxan-disabler"
 
 [package]
 name = "arxan-disabler"
 authors.workspace = true
 edition.workspace = true
+license.workspace = true
 description = "Neuters Arxan in FromSoftware titles"
 version = "0.1.0"
 
@@ -63,3 +67,6 @@ codegen-units = 1
 strip = true
 debug = false
 panic = "abort"
+
+[package.metadata.docs.rs]
+features = ["ffi", "disabler-debug"]

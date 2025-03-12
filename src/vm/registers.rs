@@ -75,6 +75,7 @@ macro_rules! register_impl {
     };
 }
 
+#[allow(dead_code)]
 impl Registers {
     register_impl!(RAX, rax, rax_mut);
     register_impl!(RCX, rcx, rcx_mut);

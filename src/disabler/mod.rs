@@ -1,3 +1,33 @@
+//! Provides utilities for disabling Arxan in various FromSoftware games.
+//!
+//! Disablers implement the [`ArxanDisabler`] trait and are prefixed by the game acronym
+//! (e.g. [`DSRArxanDisabler`]). Integration with a DLL mod is very simple and only requires
+//! an [`ArxanDisabler::disable`] call to be made **before** the game's entry point is called.
+//!
+//! <div class="warning">
+//! Many DLL injectors or mod launchers do not suspend the process upon creation or otherwise
+//! provide a method to execute your code before the game's entry point is invoked. If they
+//! are used with this module, the game will likely crash.
+//! </div>
+//!
+//! Example usage for Dark Souls Remastered:
+//! ```no_run
+//! use arxan_disabler::disabler::DSRArxanDisabler;
+//!
+//! unsafe fn my_entry_point() {
+//!     DSRArxanDisabler::disable(|| {
+//!         println!("Arxan disabled!");
+//!         // This is a good place to do your hooks.
+//!         // Once this callback returns, the game's true entry point
+//!         // will be invoked.
+//!     });
+//! }
+//! ```
+//!
+//! # Debugging
+//! If the [`disabler-debug`] feature is enabled, patched Arxan stubs will log their first
+//! execution with the [`log::Level::Trace`] severity.
+
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use call_hook::CallHook;
@@ -13,6 +43,7 @@ mod common;
 mod steamstub;
 
 pub mod game_specific;
+pub use game_specific::*;
 
 /// Implementation of an Arxan disabler for a particular game.
 pub trait ArxanDisabler: Default + Send + 'static {
@@ -120,7 +151,7 @@ macro_rules! ffi_impl {
     ($disabler:ty, $ffi_disable:ident) => {
         #[cfg(feature = "ffi")]
         #[no_mangle]
-        pub unsafe extern "C" fn $ffi_disable(
+        unsafe extern "C" fn $ffi_disable(
             callback: unsafe extern "C" fn(*mut ::std::ffi::c_void),
             context: *mut ::std::ffi::c_void,
         ) {

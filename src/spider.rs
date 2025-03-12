@@ -1,3 +1,10 @@
+//! Program scanner which finds Arxan stubs and the information required to patch them.
+//!
+//! The current approach for finding these stubs involves searching for the `TEST RSP, 0xF`
+//! instructions used by the stubs to align the stack. A cut-down x64 branching emulator
+//! is then started from there until the exit stub is reached and the return addresses
+//! have been collected.
+
 use std::ops::ControlFlow;
 
 use crate::patch::{ReturnGadgets, StubPatchInfo};
@@ -140,6 +147,12 @@ impl<'a> Spider<'a> {
     }
 }
 
+/// Finds all Arxan stub addresses, passing the necessary information to patch the stub
+/// to a user defined callback.
+///
+/// This function can be used for static analysis purposes or to perform the patches to
+/// memory yourself. If you simply want to disable Arxan for the game you will be
+/// injecting into, consider enabling the `disabler` feature.
 pub fn find_arxan_stubs(pe: PeView<'_>, mut callback: impl FnMut(u64, Option<StubPatchInfo>)) {
     let base = pe.optional_header().ImageBase;
 

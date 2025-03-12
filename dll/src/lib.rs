@@ -16,10 +16,7 @@ use windows::Win32::{
 unsafe fn disable_dsr() {
     log::info!("DSR detected");
     DSRArxanDisabler::disable(|| {
-        log::info!("Patching hardcoded SteamAppId (pirate emoji)");
-        std::env::set_var("SteamAppId", "480");
-        let harcoded_appid_imm = 0x140137df8 as *mut u32;
-        harcoded_appid_imm.write_unaligned(480);
+        log::info!("RIP arxan");
     });
 }
 

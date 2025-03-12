@@ -1,8 +1,23 @@
+//! Structs detailing code patches to indivitual Arxan stubs.
+
 use iced_x86::{
     BlockEncoder, BlockEncoderOptions, Code, IcedError, Instruction, InstructionBlock,
     MemoryOperand, Register,
 };
 
+/// Describes the return gadget used by an Arxan stub to jump back to normal code.
+///
+/// Arxan stubs follow this general pattern:
+///
+/// 1. Push 3 fake return addresses to the stack.
+/// 2. Push the current context (GPRs, XMM registers, EFLAGS) to the stack.
+/// 3. Align the stack using a `TEST RSP, 0xF` instruction to conditionally push 8 more bytes.
+/// 3. Jump to the stub code (hash check, anti debug check, etc).
+/// 4. On success paths, the stub writes the "true" return addresses over the fake ones.
+/// 5. Jump to an exit sequence which pops the current context and does a return.
+///
+/// This struct specifies the offset of the return addresses from the value of RSP during step 3
+/// above, along with the raw bytes making up said addresses.
 #[derive(Debug, Clone, Copy)]
 pub struct ReturnGadgets {
     pub stack_offset: u64,
@@ -12,13 +27,24 @@ impl ReturnGadgets {
     pub const GADGET_BYTES: usize = 24;
 }
 
+// Information required to patch a particular Arxan stub, given the address of the
+// TEST RSP instruction.
 #[derive(Debug)]
 pub struct StubPatchInfo {
+    /// The virtual address of the exit stub which pops the saved execution context.
     pub exit_stub_addr: u64,
+
+    /// Return gadgets used by the exit stub to jump back to the original code, if any.
+    ///
+    /// Some stubs simply use a normal near jump instead of using return gadgets.
     pub return_gadgets: Option<ReturnGadgets>,
 }
 
 impl StubPatchInfo {
+    /// Assembles a patch to skip the Arxan stub associated with this [`StubPatchInfo`].
+    ///
+    /// Returns position-independent x64 bytecode hook that should be installed by overriding
+    /// the stub's TEST RSP instruction with a near JMP.
     pub fn assemble(&self) -> Result<Vec<u8>, IcedError> {
         let mut instructions = Vec::new();
 

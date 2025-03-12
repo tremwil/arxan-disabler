@@ -1,4 +1,7 @@
+#![cfg_attr(doc, feature(doc_auto_cfg))]
+#![cfg_attr(doc, feature(doc_cfg))]
 #![deny(unsafe_op_in_unsafe_fn)]
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "ffi")]
 pub mod ffi;
@@ -8,7 +11,10 @@ pub mod disabler;
 
 pub mod patch;
 pub mod spider;
-pub mod vm;
 
+mod vm;
+
+/// Re-export of the `iced_x86` crate.
 pub use iced_x86;
+/// Re-export of the `pelite` crate.
 pub use pelite;

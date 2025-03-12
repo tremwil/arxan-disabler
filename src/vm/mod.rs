@@ -1,11 +1,9 @@
-//! Forking x64 "emulator"
-
 use iced_x86::{
     Decoder, DecoderOptions, FlowControl, Instruction, InstructionInfoFactory, Mnemonic, OpAccess,
     OpKind, Register,
 };
 use indexmap::IndexSet;
-use pelite::pe::{Pe, PeObject, PeView};
+use pelite::pe::{Pe, PeObject};
 
 pub mod memory;
 pub mod registers;
@@ -32,6 +30,7 @@ pub struct PastFork<'a> {
     pub branch_count: usize,
 }
 
+#[allow(dead_code)]
 pub struct RunStep<'a, 'b> {
     pub depth: usize,
     pub next_instruction: &'b mut Instruction,
@@ -44,14 +43,6 @@ pub struct RunStep<'a, 'b> {
 pub type MaybeFork<'a> = Option<ProgramState<'a>>;
 
 impl<'a> ProgramState<'a> {
-    pub fn with_rip(image: PeView<'a>, rip: u64) -> Self {
-        Self {
-            rip: Some(rip),
-            registers: Registers::default(),
-            memory: MemoryStore::new(image),
-        }
-    }
-
     pub fn run<F>(self, mut on_step: F)
     where
         F: for<'b> FnMut(RunStep<'a, 'b>) -> Option<MaybeFork<'a>>,
