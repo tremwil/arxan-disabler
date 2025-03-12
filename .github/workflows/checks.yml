@@ -17,6 +17,6 @@ jobs:
           rustup update nightly
           rustup update stable
           rustup default stable
-      - run: cargo build -p arxan-disabler -p arxan-disabler-dll --all-features
-      - run: cargo test --all-features
-      - run: cargo +nightly build -p launcher --all-features
+      - run: cargo build -p arxan-disabler -F ffi,disabler-debug -p arxan-disabler-dll
+      - run: cargo test -F ffi,disabler-debug
+      - run: cargo +nightly build -p launcher

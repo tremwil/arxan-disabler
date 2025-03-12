@@ -24,6 +24,7 @@ crate-type = ["rlib", "staticlib"]
 ffi = []
 disabler = ["windows"]
 disabler-debug = ["disabler"]
+doc_auto_cfg = []
 
 [dependencies]
 windows = { workspace = true, optional = true }
@@ -66,4 +67,4 @@ debug = false
 panic = "abort"
 
 [package.metadata.docs.rs]
-features = ["ffi", "disabler-debug"]
+features = ["ffi", "disabler-debug", "doc_auto_cfg"]

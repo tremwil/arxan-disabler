@@ -1,5 +1,4 @@
-#![cfg_attr(doc, feature(doc_auto_cfg))]
-#![cfg_attr(doc, feature(doc_cfg))]
+#![cfg_attr(feature = "doc_auto_cfg", feature(doc_auto_cfg))]
 #![deny(unsafe_op_in_unsafe_fn)]
 #![doc = include_str!("../README.md")]
 
