@@ -1,7 +1,7 @@
 use iced_x86::{Instruction, Mnemonic, OpKind};
 
 pub(super) fn is_cmov(mnemonic: Mnemonic) -> bool {
-    return mnemonic >= Mnemonic::Cmova && mnemonic <= Mnemonic::Cmovs;
+    mnemonic >= Mnemonic::Cmova && mnemonic <= Mnemonic::Cmovs
 }
 
 pub(super) fn op_size(instr: &Instruction, op: u32) -> usize {

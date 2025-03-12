@@ -77,7 +77,7 @@ impl<'a> MemoryStore<'a> {
     }
 
     pub fn read<'b>(&self, addr: u64, out_buf: &'b mut [u8]) -> Option<&'b mut [u8]> {
-        if out_buf.len() == 0 {
+        if out_buf.is_empty() {
             return Some(out_buf);
         }
 
@@ -93,28 +93,30 @@ impl<'a> MemoryStore<'a> {
             let mut out_cursor = &mut *out_buf;
 
             let start_block = self.get_block(i_start_block)?;
-            start_block.is_known[start_ofs..]
-                .all()
-                .then(|| out_cursor.write(&start_block.bytes[start_ofs..]).unwrap())?;
+            start_block.is_known[start_ofs..].all().then(|| {
+                out_cursor
+                    .write_all(&start_block.bytes[start_ofs..])
+                    .unwrap()
+            })?;
 
             for i_mid_block in (i_start_block + 1)..(i_end_block - 1) {
                 let mid_block = self.get_block(i_mid_block)?;
                 mid_block.is_known.all().then(|| {
-                    out_cursor.write(&mid_block.bytes).unwrap();
+                    out_cursor.write_all(&mid_block.bytes).unwrap();
                 })?;
             }
 
             let end_block = self.get_block(i_end_block)?;
             end_block.is_known[..end_ofs]
                 .all()
-                .then(|| out_cursor.write(&end_block.bytes[..=end_ofs]).unwrap())?;
+                .then(|| out_cursor.write_all(&end_block.bytes[..=end_ofs]).unwrap())?;
         }
 
         Some(out_buf)
     }
 
     pub fn write(&mut self, addr: u64, mut buf: &[u8]) {
-        if buf.len() == 0 {
+        if buf.is_empty() {
             return;
         }
 
@@ -128,17 +130,17 @@ impl<'a> MemoryStore<'a> {
         } else {
             let start_block = self.get_block_mut(i_start_block);
             start_block.is_known[start_ofs..].fill(true);
-            buf.read(&mut start_block.bytes[start_ofs..]).unwrap();
+            buf.read_exact(&mut start_block.bytes[start_ofs..]).unwrap();
 
             for i_mid_block in (i_start_block + 1)..(i_end_block - 1) {
                 let mid_block = self.get_block_mut(i_mid_block);
                 mid_block.is_known.fill(true);
-                buf.read(&mut mid_block.bytes).unwrap();
+                buf.read_exact(&mut mid_block.bytes).unwrap();
             }
 
             let end_block = self.get_block_mut(i_end_block);
             end_block.is_known[..end_ofs].fill(true);
-            buf.read(&mut end_block.bytes[..=end_ofs]).unwrap();
+            buf.read_exact(&mut end_block.bytes[..=end_ofs]).unwrap();
         }
     }
 

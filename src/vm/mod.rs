@@ -100,7 +100,7 @@ impl<'a> ProgramState<'a> {
 
             let ip = state.rip.unwrap();
             decoder.set_ip(ip);
-            if let Err(_) = decoder.set_position((ip - base) as usize) {
+            if decoder.set_position((ip - base) as usize).is_err() {
                 state.rip = None;
                 continue;
             }

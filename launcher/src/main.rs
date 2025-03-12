@@ -115,7 +115,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let game_path_cstr = CString::new(game_path.as_os_str().to_str().unwrap())?;
     let game_dir_cstr = CString::new(game_dir.as_os_str().to_str().unwrap())?;
 
-
     let dll_path = if !args.no_inject {
         std::process::Command::new("cargo")
             .args(["build", "--release", "-p", "arxan-disabler-dll"])
@@ -126,11 +125,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             .join("release")
             .join("arxan_disabler_dll.dll");
 
-        
         log::info!("DLL path: {}", dll_path.display());
         Some(dll_path)
-    }
-    else {
+    } else {
         None
     };
 
@@ -185,8 +182,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.interactive {
         log::info!("Press enter to resume process. Output will appear below.");
         let _ = std::io::stdin().read_line(&mut String::new());
-    }
-    else {
+    } else {
         log::info!("Resuming process. Output will appear below");
     }
 

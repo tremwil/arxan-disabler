@@ -3,7 +3,7 @@ use std::ops::ControlFlow;
 use crate::patch::{ReturnGadgets, StubPatchInfo};
 use crate::vm::{memory::MemoryStore, registers::Registers, ProgramState};
 use crate::vm::{MaybeFork, RunStep};
-use iced_x86::{Code, FastFormatter, Mnemonic, Register};
+use iced_x86::{Code, Mnemonic, Register};
 use memchr::memmem;
 use pelite::{
     pe::PeObject,
@@ -94,7 +94,7 @@ impl<'a> Spider<'a> {
         // Process the instruction ourselves
         let maybe_fork = step
             .state
-            .update_state(&step.next_instruction, step.info_factory);
+            .update_state(step.next_instruction, step.info_factory);
 
         // If it jumps outside of the range, assume it was a function call and perform a return
         match (step.state.rip, step.state.registers.rsp_mut()) {
@@ -124,7 +124,7 @@ impl<'a> Spider<'a> {
             // Check if jmp target address to read matches stack offset.
             // otherwise, go back to searching
             let expected = Some(self.init_rsp + gadgets.stack_offset);
-            let actual = step.state.virtual_address(&step.next_instruction, 0);
+            let actual = step.state.virtual_address(step.next_instruction, 0);
             if actual == expected {
                 self.state = SpiderState::GadgetsValidated(gadgets)
             } else {
