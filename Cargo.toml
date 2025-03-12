@@ -8,7 +8,6 @@ edition = "2021"
 license = "MIT"
 license-file = "LICENSE.txt"
 repository = "https://github.com/tremwil/arxan-disabler"
-exclude = ["/tests/bin/*"]
 
 [package]
 name = "arxan-disabler"
@@ -17,6 +16,7 @@ edition.workspace = true
 license.workspace = true
 description = "Neuters Arxan in FromSoftware titles"
 version = "0.1.0"
+exclude = ["tests/bin/*"]
 
 [lib]
 crate-type = ["rlib", "staticlib"]
