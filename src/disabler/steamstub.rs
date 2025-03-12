@@ -34,6 +34,8 @@ use pelite::{
     pe64::PeView,
 };
 
+use crate::disabler::common::clear_being_debugged;
+
 use super::{
     call_hook::CallHook,
     common::{game_code_buffer, game_module},
@@ -108,6 +110,12 @@ pub unsafe fn schedule_after_steamstub(callback: impl FnOnce(u64) + Send + 'stat
                 cc::C,
                 move |entry| {
                     call_hook.unhook();
+
+                    // SteamStub 3.1 checks the PEB for the IsDebugged flag on startup.
+                    // We'll need to clear it first.
+                    clear_being_debugged();
+                    log::debug!("Set PEB->BeingDebugged to false");
+
                     log::debug!("Running SteamStub unpacker");
                     let original_entry = call_hook.original()(entry);
                     log::debug!(

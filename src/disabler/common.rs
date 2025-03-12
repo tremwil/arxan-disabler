@@ -124,3 +124,15 @@ pub unsafe fn make_module_rwe(pe: PeView<'_>) {
         }
     }
 }
+
+/// Sets the BeingDebugged flag in the PEB to false.
+pub unsafe fn clear_being_debugged() {
+    unsafe {
+        std::arch::asm!(
+            "mov {reg}, qword ptr GS:[0x30]",
+            "mov {reg}, qword ptr [{reg} + 0x60]",
+            "mov byte ptr [{reg} + 0x2], 0",
+            reg = out(reg) _
+        );
+    }
+}
