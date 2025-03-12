@@ -8,6 +8,7 @@ edition = "2021"
 license = "MIT"
 license-file = "LICENSE.txt"
 repository = "https://github.com/tremwil/arxan-disabler"
+exclude = ["/tests/bin/*"]
 
 [package]
 name = "arxan-disabler"
@@ -22,7 +23,7 @@ crate-type = ["rlib", "staticlib"]
 
 [features]
 ffi = []
-disabler = ["windows"]
+disabler = ["windows", "closure-ffi"]
 disabler-debug = ["disabler"]
 doc_auto_cfg = []
 
@@ -38,6 +39,7 @@ bitvec = "1.0"
 
 [dependencies.closure-ffi]
 version = "0.2"
+optional = true
 default-features = false
 
 [workspace.dependencies]
