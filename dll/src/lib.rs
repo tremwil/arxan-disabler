@@ -1,7 +1,7 @@
 extern crate arxan_disabler;
 extern crate windows;
 
-use std::{ffi::OsString, os::windows::ffi::OsStringExt, path::PathBuf};
+use std::{ffi::OsString, fs::File, os::windows::ffi::OsStringExt, path::PathBuf};
 
 use arxan_disabler::disabler::{
     game_specific::{DS3ArxanDisabler, DSRArxanDisabler},
@@ -44,12 +44,24 @@ pub unsafe extern "system" fn DllMain(
         AttachConsole(ATTACH_PARENT_PROCESS)
             .or_else(|_| AllocConsole())
             .unwrap();
-        simplelog::TermLogger::init(
-            simplelog::LevelFilter::Debug,
-            simplelog::Config::default(),
-            simplelog::TerminalMode::Stdout,
-            simplelog::ColorChoice::Auto,
-        )
+
+        simplelog::CombinedLogger::init(vec![
+            simplelog::TermLogger::new(
+                simplelog::LevelFilter::Debug,
+                simplelog::Config::default(),
+                simplelog::TerminalMode::Stdout,
+                simplelog::ColorChoice::Auto,
+            ),
+            simplelog::WriteLogger::new(
+                simplelog::LevelFilter::Trace,
+                simplelog::Config::default(),
+                File::options()
+                    .write(true)
+                    .truncate(true)
+                    .open("arxan-disabler-dll.log")
+                    .unwrap(),
+            ),
+        ])
         .unwrap();
 
         let mut name_buf = [0u16; 2048];
