@@ -15,5 +15,6 @@ jobs:
       - uses: actions/checkout@v4
       - run: rustup update stable && rustup default stable
       - run: rustup target add x86_64-pc-windows-gnu
+      - run: rustup component add rust-mingw32 --target x86_64-pc-windows-gnu
       - run: cargo build --target x86_64-pc-windows-gnu --all-targets --all-features
       - run: cargo test --target x86_64-pc-windows-gnu --all-targets --all-features

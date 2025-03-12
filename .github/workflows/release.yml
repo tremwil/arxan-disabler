@@ -10,10 +10,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: rustup update nightly
-      - run: rustup target add x86_64-pc-windows-gnu --toolchain nightly
 
-      - run: >
+      - name: Setup rust
+        run: >
+          rustup update nightly && rustup default nightly
+          rustup target add x86_64-pc-windows-gnu --toolchain nightly
+          rustup component add rust-mingw32 --target x86_64-pc-windows-gnu
+      - name: Create dist foler
+        run: >
           mkdir ffi-dist
           mkdir ffi-dist/lib
           cp -R ./include ./ffi-dist
@@ -25,13 +29,10 @@ jobs:
         run: >
           ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler-debug,ffi
           mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler-debug.lib
-      
       - name: crates.io publish
         run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
-
       - name: Zip release
         run: zip -r "arxan-disabler-${{ github.ref_name }}.zip" ./ffi-dist
-      
       - name: GitHub release
         uses: softprops/action-gh-release@v2
         with:
