@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - run: >
+      - run: |
           rustup update stable
           rustup default stable
       - run: cargo build --all-targets --all-features

@@ -12,22 +12,22 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup rust
-        run: >
+        run: |
           sudo apt-get install -y gcc-mingw-w64-x86-64-win32
           rustup update nightly
           rustup default nightly
           rustup target add x86_64-pc-windows-gnu --toolchain nightly
       - name: Create dist foler
-        run: >
+        run: |
           mkdir ffi-dist
           mkdir ffi-dist/lib
           cp -R ./include ./ffi-dist
       - name: Build with ffi, disabler
-        run: >
+        run: |
           ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler,ffi
           mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler.lib
       - name: Build with ffi, disabler-debug
-        run: >
+        run: |
           ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler-debug,ffi
           mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler-debug.lib
       - name: crates.io publish
