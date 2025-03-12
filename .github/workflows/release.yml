@@ -1,0 +1,38 @@
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    name: Build static library
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update nightly
+      - run: rustup target add x86_64-pc-windows-gnu --toolchain nightly
+
+      - run: >
+          mkdir ffi-dist
+          mkdir ffi-dist/lib
+          cp -R ./include ./ffi-dist
+      - name: Build with ffi, disabler
+        run: >
+          ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler,ffi
+          mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler.lib
+      - name: Build with ffi, disabler-debug
+        run: >
+          ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler-debug,ffi
+          mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler-debug.lib
+      
+      - name: crates.io publish
+        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Zip release
+        run: zip -r "arxan-disabler-${{ github.ref_name }}.zip" ./ffi-dist
+      
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: arxan-disabler-${{ github.ref_name }}.zip
