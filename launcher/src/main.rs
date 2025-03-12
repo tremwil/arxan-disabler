@@ -46,16 +46,16 @@ struct CliArgs {
     delay: Option<f64>,
 
     #[arg(
-        short, 
-        long, 
-        action = clap::ArgAction::SetTrue, 
+        short,
+        long,
+        action = clap::ArgAction::SetTrue,
         help = "Wait for user input before resuming the game process."
     )]
     interactive: bool,
 
     #[arg(
-        long, 
-        action = clap::ArgAction::SetTrue, 
+        long,
+        action = clap::ArgAction::SetTrue,
         help = "Skip injecting the arxan disabler, just launch the game."
     )]
     no_inject: bool,
