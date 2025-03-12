@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt-get install -y gcc-mingw-w64-x86-64-win32
       - run: rustup update stable && rustup default stable
       - run: rustup target add x86_64-pc-windows-gnu
       - run: rustup component add rust-mingw32 --target x86_64-pc-windows-gnu
