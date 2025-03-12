@@ -1,3 +1,5 @@
+//! Forking x64 "emulator"
+
 use iced_x86::{
     Decoder, DecoderOptions, FlowControl, Instruction, InstructionInfoFactory, Mnemonic, OpAccess,
     OpKind, Register,

@@ -5,6 +5,7 @@ use std::{
     sync::atomic::{AtomicPtr, Ordering},
 };
 
+use closure_ffi::{JitAlloc, JitAllocError};
 use pelite::util::AlignTo;
 use windows::Win32::System::{
     Memory::{
@@ -14,6 +15,7 @@ use windows::Win32::System::{
     SystemInformation::{GetSystemInfo, SYSTEM_INFO},
 };
 
+#[derive(Debug)]
 #[repr(align(64))]
 pub struct CodeBuffer {
     cursor: AtomicPtr<u8>,
@@ -25,10 +27,6 @@ unsafe impl Send for CodeBuffer {}
 unsafe impl Sync for CodeBuffer {}
 
 impl CodeBuffer {
-    pub fn range(&self) -> Range<usize> {
-        self.alloc_base.addr()..self.end.addr()
-    }
-
     pub fn alloc_near(region: impl IntoUsizeRange, size: usize, max_sep: usize) -> Option<Self> {
         let region = region.into_region();
 
@@ -109,6 +107,33 @@ impl CodeBuffer {
 impl Drop for CodeBuffer {
     fn drop(&mut self) {
         unsafe { VirtualFree(self.alloc_base, 0, MEM_RELEASE).unwrap() }
+    }
+}
+
+impl JitAlloc for CodeBuffer {
+    fn alloc(&self, size: usize) -> Result<(*const u8, *mut u8), JitAllocError> {
+        self.reserve(size)
+            .map(|p| (p as *const u8, p as *mut u8))
+            .ok_or(JitAllocError)
+    }
+
+    // CodeBuffer is a simple arena without the ability to free individual blocks
+    #[allow(unused_variables)]
+    unsafe fn release(&self, rx_ptr: *const u8) -> Result<(), JitAllocError> {
+        Ok(())
+    }
+
+    // Not needed on modern AMD64 processors
+    #[allow(unused_variables)]
+    unsafe fn flush_instruction_cache(rx_ptr: *const u8, size: usize) {}
+
+    // Not needed on Windows
+    #[allow(unused_variables)]
+    unsafe fn protect_jit_memory(
+        ptr: *const u8,
+        size: usize,
+        access: closure_ffi::jit_alloc::ProtectJitAccess,
+    ) {
     }
 }
 

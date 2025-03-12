@@ -3,7 +3,7 @@ use std::ops::ControlFlow;
 use crate::patch::{ReturnGadgets, StubPatchInfo};
 use crate::vm::{memory::MemoryStore, registers::Registers, ProgramState};
 use crate::vm::{MaybeFork, RunStep};
-use iced_x86::{Code, Mnemonic, Register};
+use iced_x86::{Code, FastFormatter, Mnemonic, Register};
 use memchr::memmem;
 use pelite::{
     pe::PeObject,
@@ -53,7 +53,7 @@ impl<'a> Spider<'a> {
             step.state.rip = None;
             return Some(None);
         }
-        if step.past_forks.len() > 4 || step.depth > 32 {
+        if step.past_forks.len() > 8 || step.depth > 32 {
             step.state.rip = None;
             return Some(None);
         }
@@ -146,7 +146,10 @@ pub fn find_arxan_stubs(pe: PeView<'_>, mut callback: impl FnMut(u64, Option<Stu
     // Search for TEST rsp, 15 instructions
     // These are extremely unlikely to be emitted by a compiler, but are present once at the
     // beginning of each Arxan stub
-    for test_rsp_rva in memmem::find_iter(pe.image(), b"\x48\xf7\xc4\x0f\x00\x00\x00") {
+    let test_rsp_rvas: Vec<_> =
+        memmem::find_iter(pe.image(), b"\x48\xf7\xc4\x0f\x00\x00\x00").collect();
+
+    for test_rsp_rva in test_rsp_rvas {
         let hook_address = base + test_rsp_rva as u64;
 
         let state = ProgramState {

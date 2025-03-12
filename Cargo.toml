@@ -31,6 +31,10 @@ fxhash = "0.2.1"
 indexmap = "2.7.1"
 bitvec = "1.0"
 
+[dependencies.closure-ffi]
+version = "0.2"
+default-features = false
+
 [workspace.dependencies]
 log = "0.4"
 simplelog = "0.12.2"

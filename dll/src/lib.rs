@@ -3,7 +3,10 @@ extern crate windows;
 
 use std::{ffi::OsString, os::windows::ffi::OsStringExt, path::PathBuf};
 
-use arxan_disabler::disabler::{dsr::DSRArxanDisabler, ArxanDisabler};
+use arxan_disabler::disabler::{
+    game_specific::{DS3ArxanDisabler, DSRArxanDisabler},
+    ArxanDisabler,
+};
 use windows::Win32::{
     Foundation::HMODULE,
     System::{
@@ -21,6 +24,11 @@ unsafe fn disable_dsr() {
         let harcoded_appid_imm = 0x140137df8 as *mut u32;
         harcoded_appid_imm.write_unaligned(480);
     });
+}
+
+unsafe fn disable_ds3() {
+    log::info!("DS3 detected");
+    DS3ArxanDisabler::disable(|| log::info!("RIP Arxan"));
 }
 
 #[allow(non_snake_case)]
@@ -50,6 +58,7 @@ pub unsafe extern "system" fn DllMain(
         let game_path: PathBuf = OsString::from_wide(&name_buf[..len]).into();
         match game_path.file_stem().unwrap().to_string_lossy().as_ref() {
             "DarkSoulsRemastered" => disable_dsr(),
+            "DarkSoulsIII" => disable_ds3(),
             other => panic!("{other} is not supported"),
         }
     }

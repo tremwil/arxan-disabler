@@ -10,3 +10,6 @@ simplelog.workspace = true
 windows.workspace = true
 dll-syringe = "0.15"
 dotenvy_macro = "0.15"
+steamlocate = "2.0"
+clap = { version = "4.5.32", features = ["derive"] }
+walkdir = "2.5"

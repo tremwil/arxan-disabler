@@ -1,16 +1,21 @@
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-use common::{make_module_rwe, DISABLER_CTX};
+use call_hook::CallHook;
+use closure_ffi::{cc, BareFnOnce};
+use common::{find_and_patch_stubs, game_code_buffer, game_module, make_module_rwe};
+use steamstub::schedule_after_steamstub;
 
-use crate::patch::StubPatchInfo;
+use super::patch::StubPatchInfo;
 
 mod call_hook;
 mod code_buffer;
 mod common;
+mod steamstub;
 
-pub mod dsr;
+pub mod game_specific;
 
-pub trait ArxanDisabler {
+/// Implementation of an Arxan disabler for a particular game.
+pub trait ArxanDisabler: Default + Send + 'static {
     /// Internal to the disabler implementation.
     ///
     /// Filters patches before they are applied by the default
@@ -18,105 +23,112 @@ pub trait ArxanDisabler {
     ///
     /// The default simply performs all patches.
     #[allow(unused_variables)]
-    fn filter_patch(hook_address: u64, patch: Option<&StubPatchInfo>) -> bool {
+    fn filter_patch(&mut self, hook_address: u64, patch: Option<&StubPatchInfo>) -> bool {
         true
     }
 
     /// Finds and applies code patches to Arxan stubs.
     ///
-    /// Called by the default implementation of [`ArxanDisabler::_init_stub_detour`].
+    /// Called by the default implementation of [`ArxanDisabler::init_stub_hook`].
     ///
     /// While you can could call this directly at any time after game initialization, it may
     /// lead to data races and crashes. Consider calling [`ArxanDisabler::disable`] before the
     /// entry point runs instead.
-    unsafe fn patch_stubs() {
+    unsafe fn patch_stubs(&mut self) {
         log::debug!("Finding and patching Arxan stubs");
-        unsafe { DISABLER_CTX.find_and_patch(Self::filter_patch) };
+        unsafe {
+            find_and_patch_stubs(game_module(), game_code_buffer(), |h, p| {
+                self.filter_patch(h, p)
+            })
+        };
     }
 
     /// Internal to the disabler implementation.
     ///
     /// Function to hook the Arxan initialization stub with. Takes care of performing all required patches.
     ///
-    /// By default, the detour will be removed and the original initialization stub run to decrypt information.
+    /// By default, will first run the original initialization stub run to decrypt information.
     /// Then, [`ArxanDisabler::patch_stubs`] will be run to patch Arxan stubs, before running the user-provided
-    /// callback that was passed to [`ArxanDisabler::disable`]
-    unsafe extern "C" fn _init_stub_detour() {
-        log::debug!("Undoing Arxan initialization stub hook");
-        unsafe { DISABLER_CTX.init_stub_hook.unhook() };
-
+    /// callback that was passed to [`ArxanDisabler::disable`].
+    unsafe fn init_stub_hook(
+        &mut self,
+        original_stub: unsafe extern "C" fn(),
+        user_callback: Box<dyn FnOnce() + Send>,
+    ) {
         log::debug!("Running Arxan initialization stub");
-        unsafe { DISABLER_CTX.init_stub_hook.original()() };
+        unsafe { original_stub() };
 
-        unsafe { Self::patch_stubs() };
+        unsafe { self.patch_stubs() };
 
         log::debug!("Arxan disabled, running user callback");
-        DISABLER_CTX
-            .post_disable_cb
-            .lock()
-            .unwrap()
-            .as_mut()
-            .map(|cb| cb());
+        user_callback()
     }
 
-    /// Performs the appropriate patches to disable Arxan.
+    /// Do-it-all function to disable Arxan.
     /// The callback will be triggered once patching is complete, and can be
     /// used to initialize hooks/etc.
     ///
     /// This must be called **exactly once** before the game's entry point runs.
     /// It is generally safe to call from within DllMain.
+    ///
+    /// The default implementation handles the game module not being RWE yet, and
+    /// SteamStub 3.1 possibly being applied on top of Arxan.
     unsafe fn disable<F>(callback: F)
     where
-        F: FnMut() + Send + Sync + 'static,
+        F: FnOnce() + Send + 'static,
     {
-        let ctx = &*DISABLER_CTX;
+        static CALLED: AtomicBool = AtomicBool::new(false);
         assert!(
-            !ctx.disable_initiated.swap(true, Ordering::Relaxed),
-            "ArxanDisabler::disable already called"
+            !CALLED.swap(true, Ordering::Relaxed),
+            "ArxanDisabler::disable already called once"
         );
+
+        let pe = game_module();
 
         log::debug!("Making game image RWE");
         unsafe {
-            make_module_rwe(ctx.pe);
+            make_module_rwe(pe);
         }
 
-        // Set callback
-        ctx.post_disable_cb
-            .lock()
-            .unwrap()
-            .replace(Box::new(callback));
-
-        log::debug!("Detouring Arxan init stub");
+        let user_callback = Box::new(callback);
+        let mut instance = Self::default();
         unsafe {
-            ctx.init_stub_hook
-                .hook_with_thunk(Self::_init_stub_detour, &ctx.code_buffer)
-        };
+            schedule_after_steamstub(move |arxan_entry| {
+                // Arxan entry stubs begin first SUB rsp, 28 (4 bytes)
+                let arxan_stub_hook =
+                    &*Box::leak(Box::new(CallHook::new((arxan_entry + 4) as *mut u8)));
+
+                let detour = BareFnOnce::with_jit_alloc(
+                    cc::C,
+                    move || {
+                        log::info!("Removing Arxan stub hook");
+                        arxan_stub_hook.unhook();
+                        instance.init_stub_hook(arxan_stub_hook.original(), user_callback);
+                    },
+                    game_code_buffer(),
+                )
+                .unwrap();
+
+                log::debug!("Detouring Arxan init stub");
+                arxan_stub_hook.hook_with(detour.leak());
+            });
+        }
     }
 }
 
 macro_rules! ffi_impl {
-    ($disabler:ty, $ffi_disable:ident, $ffi_patch:ident) => {
+    ($disabler:ty, $ffi_disable:ident) => {
         #[cfg(feature = "ffi")]
-        pub mod ffi {
-            use super::*;
-            use std::ffi::c_void;
-
-            #[no_mangle]
-            pub unsafe extern "C" fn $ffi_disable(
-                callback: unsafe extern "C" fn(*mut c_void),
-                context: *mut c_void,
-            ) {
-                let ptr_addr = context.addr();
-                unsafe {
-                    <$disabler as $crate::disabler::ArxanDisabler>::disable(move || {
-                        callback(ptr_addr as *mut c_void)
-                    })
-                }
-            }
-
-            #[no_mangle]
-            pub unsafe extern "C" fn $ffi_patch() {
-                unsafe { <$disabler as $crate::disabler::ArxanDisabler>::patch_stubs() }
+        #[no_mangle]
+        pub unsafe extern "C" fn $ffi_disable(
+            callback: unsafe extern "C" fn(*mut ::std::ffi::c_void),
+            context: *mut ::std::ffi::c_void,
+        ) {
+            let ptr_addr = context.addr();
+            unsafe {
+                <$disabler as $crate::disabler::ArxanDisabler>::disable(move || {
+                    callback(ptr_addr as *mut ::std::ffi::c_void)
+                })
             }
         }
     };
