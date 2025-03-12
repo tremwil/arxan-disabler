@@ -19,12 +19,3 @@ impl ArxanDisabler for DSRArxanDisabler {
 }
 
 ffi_impl!(DSRArxanDisabler, disable_arxan_dsr);
-
-/// Arxan disabler for Dark Souls III 1.15.2
-///
-/// May or may not work for other versions.
-#[derive(Default)]
-pub struct DS3ArxanDisabler;
-impl ArxanDisabler for DS3ArxanDisabler {}
-
-ffi_impl!(DS3ArxanDisabler, disable_arxan_ds3);
