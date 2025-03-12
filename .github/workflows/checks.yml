@@ -16,5 +16,5 @@ jobs:
       - run: |
           rustup update stable
           rustup default stable
-      - run: cargo build --all-targets --all-features
-      - run: cargo test --all-targets --all-features
+      - run: cargo build --workspace --all-features
+      - run: cargo test --workspace --all-features

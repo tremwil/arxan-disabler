@@ -12,7 +12,7 @@
 //!
 //! Example usage for Dark Souls Remastered:
 //! ```no_run
-//! use arxan_disabler::disabler::DSRArxanDisabler;
+//! use arxan_disabler::disabler::{ArxanDisabler, DSRArxanDisabler};
 //!
 //! unsafe fn my_entry_point() {
 //!     DSRArxanDisabler::disable(|| {
