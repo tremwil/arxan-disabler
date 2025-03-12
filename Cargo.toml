@@ -58,9 +58,6 @@ features = [
     "Win32_System_Console"
 ]
 
-[dev-dependencies]
-simplelog = "0.12.2"
-
 [profile.release]
 opt-level = 3
 codegen-units = 1

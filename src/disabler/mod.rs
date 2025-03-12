@@ -25,7 +25,7 @@
 //! ```
 //!
 //! # Debugging
-//! If the [`disabler-debug`] feature is enabled, patched Arxan stubs will log their first
+//! If the `disabler-debug` feature is enabled, patched Arxan stubs will log their first
 //! execution with the [`log::Level::Trace`] severity.
 
 use std::sync::atomic::{AtomicBool, Ordering};

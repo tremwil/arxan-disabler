@@ -1,7 +1,6 @@
 use std::{error::Error, time::Instant};
 
 use arxan_disabler::spider;
-use simplelog::*;
 
 #[cfg(feature = "ffi")]
 #[test]
@@ -11,13 +10,6 @@ fn test_spider_ffi() -> Result<(), Box<dyn Error>> {
         ffi::c_void,
         sync::atomic::{AtomicUsize, Ordering},
     };
-
-    TermLogger::init(
-        LevelFilter::Info,
-        Config::default(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    )?;
 
     let program_bytes = std::fs::read("tests/bin/dsr_1.3.1_dump.bin")?;
     let now = Instant::now();
@@ -57,13 +49,6 @@ fn test_spider_ffi() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn test_spider_rust() -> Result<(), Box<dyn Error>> {
-    TermLogger::init(
-        LevelFilter::Info,
-        Config::default(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    )?;
-
     let program_bytes = std::fs::read("tests/bin/dsr_1.3.1_dump.bin")?;
     let now = Instant::now();
 
