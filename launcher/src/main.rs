@@ -3,6 +3,7 @@ use std::{
     error::Error,
     ffi::{CString, OsStr},
     os::windows::io::{FromRawHandle, OwnedHandle},
+    time::Duration,
 };
 
 use clap::Parser;
@@ -36,7 +37,29 @@ struct CliArgs {
     )]
     game: String,
 
-    /// Sets a custom config file
+    #[arg(
+        short,
+        long,
+        value_name = "SECONDS",
+        help = "Time to wait before resuming the game process."
+    )]
+    delay: Option<f64>,
+
+    #[arg(
+        short, 
+        long, 
+        action = clap::ArgAction::SetTrue, 
+        help = "Wait for user input before resuming the game process."
+    )]
+    interactive: bool,
+
+    #[arg(
+        long, 
+        action = clap::ArgAction::SetTrue, 
+        help = "Skip injecting the arxan disabler, just launch the game."
+    )]
+    no_inject: bool,
+
     #[arg(
         long,
         value_name = "APPID",
@@ -92,17 +115,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     let game_path_cstr = CString::new(game_path.as_os_str().to_str().unwrap())?;
     let game_dir_cstr = CString::new(game_dir.as_os_str().to_str().unwrap())?;
 
-    std::process::Command::new("cargo")
-        .args(["build", "--release", "-p", "arxan-disabler-dll"])
-        .status()?;
 
-    let dll_path = current_dir()?
-        .join("target")
-        .join("release")
-        .join("arxan_disabler_dll.dll");
+    let dll_path = if !args.no_inject {
+        std::process::Command::new("cargo")
+            .args(["build", "--release", "-p", "arxan-disabler-dll"])
+            .status()?;
+
+        let dll_path = current_dir()?
+            .join("target")
+            .join("release")
+            .join("arxan_disabler_dll.dll");
+
+        
+        log::info!("DLL path: {}", dll_path.display());
+        Some(dll_path)
+    }
+    else {
+        None
+    };
 
     log::info!("Game path: {}", game_path.display());
-    log::info!("DLL path: {}", dll_path.display());
 
     args.env_app_id.inspect(|id| {
         log::info!("Will override app ID with {}", id);
@@ -133,13 +165,30 @@ fn main() -> Result<(), Box<dyn Error>> {
         OwnedProcess::from_handle_unchecked(handle).kill_on_drop()
     };
 
-    log::info!("Created game process. PID = {}", proc_info.dwProcessId);
-    log::info!("Injecting DLL");
+    log::info!(
+        "Created suspended game process. PID = {}",
+        proc_info.dwProcessId
+    );
 
-    let syringe = Syringe::for_process(proc.try_clone()?);
-    let _ = syringe.inject(dll_path)?;
+    if let Some(dll_path) = dll_path {
+        log::info!("Injecting DLL");
+        let syringe = Syringe::for_process(proc.try_clone()?);
+        let _ = syringe.inject(dll_path)?;
+        log::info!("DLL injected");
+    }
 
-    log::info!("DLL injected, resuming process. Output will appear below");
+    if let Some(delay) = args.delay {
+        log::info!("Waiting {delay:.2} seconds before resuming process");
+        std::thread::sleep(Duration::from_secs_f64(delay));
+    }
+
+    if args.interactive {
+        log::info!("Press enter to resume process. Output will appear below.");
+        let _ = std::io::stdin().read_line(&mut String::new());
+    }
+    else {
+        log::info!("Resuming process. Output will appear below");
+    }
 
     unsafe {
         ResumeThread(proc_info.hThread);
