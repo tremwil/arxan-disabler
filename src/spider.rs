@@ -53,7 +53,7 @@ impl<'a> Spider<'a> {
             step.state.rip = None;
             return Some(None);
         }
-        if step.past_forks.len() > 8 || step.depth > 32 {
+        if step.past_forks.len() > 5 || step.depth > 32 {
             step.state.rip = None;
             return Some(None);
         }
