@@ -70,3 +70,4 @@ panic = "abort"
 
 [package.metadata.docs.rs]
 features = ["ffi", "disabler-debug", "doc_auto_cfg"]
+default-target = "x86_64-pc-windows-msvc"
