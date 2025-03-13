@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2] - 2025-03-13
 
-### Fixed:
+### Added:
 - CICD release pipeline should now create a release with changelog
 
 ## [0.1.1] - 2025-03-13

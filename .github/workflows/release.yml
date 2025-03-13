@@ -18,23 +18,34 @@ jobs:
           rustup update nightly
           rustup component add rust-src --toolchain nightly
           rustup default nightly
+
       - name: Create dist foler
         run: |
           New-Item -ItemType Directory -Force -Path ./target/dist/lib
           cp -R ./include ./target/dist
+
       - name: Build with ffi,disabler
         run: |
           ./scripts/build-staticlib-min.bat -F disabler,ffi
           mv ./target/release/arxan_disabler.lib ./target/dist/lib/arxan_disabler.lib
+
       - name: Build with ffi,disabler-debug
         run: |
           ./scripts/build-staticlib-min.bat -F disabler-debug,ffi
           mv ./target/release/arxan_disabler.lib ./target/dist/lib/arxan_disabler_debug.lib
+
       - name: crates.io publish
         run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+
       - name: Zip release
         run: Compress-Archive -Path ./target/dist -DestinationPath "arxan-disabler-${{ github.ref_name }}.zip"
+
+      - name: Generate changelog
+        id: gen_changelog
+        run: python ./scripts/gen-changelog.py > latest_changes.md
+
       - name: GitHub release
         uses: softprops/action-gh-release@v2
         with:
           files: arxan-disabler-${{ github.ref_name }}.zip
+          body_path: latest_changes.md
