@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 log.workspace = true
 simplelog.workspace = true
 windows.workspace = true
-arxan-disabler = { path = "..", version = "0.1.1", features = ["disabler-debug"] }
+arxan-disabler = { path = "..", version = "0.1.2", features = ["disabler-debug"] }

@@ -15,7 +15,7 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Neuters Arxan in FromSoftware titles"
-version = "0.1.1"
+version = "0.1.2"
 exclude = ["tests/bin/*"]
 
 [lib]
