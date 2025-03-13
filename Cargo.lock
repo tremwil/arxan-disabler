@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "arxan-disabler"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "bitvec",
  "closure-ffi",
@@ -167,9 +167,9 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
 name = "closure-ffi"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "698e519d1dbf3676bb242f3921e58324ed15bd607e119e35c2652b83e7925c0e"
+checksum = "6aec86501d7107b3df80d86585affbaf414596d78c5a4ea97aa9024ad7b60aab"
 dependencies = [
  "seq-macro",
 ]
