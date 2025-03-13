@@ -17,6 +17,7 @@ jobs:
           rustup update nightly
           rustup default nightly
           rustup target add x86_64-pc-windows-gnu --toolchain nightly
+          rustup component add rust-src --toolchain nightly-x86_64-pc-windows-gnu
       - name: Create dist foler
         run: |
           mkdir ffi-dist
