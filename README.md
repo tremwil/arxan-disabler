@@ -24,9 +24,10 @@ are used with this module, the game will likely crash.
 
 Rust (feature `disabler` needs to be enabled)
 ```rust
-use arxan_disabler::disabler::{ArxanDisabler, DSRArxanDisabler};
-
+#[cfg(feature = "disabler")]
 unsafe fn my_entry_point() {
+    use arxan_disabler::disabler::{ArxanDisabler, DSRArxanDisabler};
+
     DSRArxanDisabler::disable(|| {
         println!("Arxan disabled!");
         // This is a good place to do your hooks.
