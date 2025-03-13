@@ -24,11 +24,11 @@ jobs:
           cp -R ./include ./ffi-dist
       - name: Build with ffi,disabler
         run: |
-          ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler,ffi
+          ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu -F disabler,ffi
           mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler.lib
       - name: Build with ffi,disabler-debug
         run: |
-          ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu --F disabler-debug,ffi
+          ./scripts/build-staticlib-min.sh --target x86_64-pc-windows-gnu -F disabler-debug,ffi
           mv ./target/release/arxan-disabler.lib ./ffi-dist/lib/arxan-disabler-debug.lib
       - name: crates.io publish
         run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
