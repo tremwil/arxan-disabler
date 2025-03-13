@@ -21,4 +21,4 @@ jobs:
           rustup default stable
       - run: cargo build -p arxan-disabler -F ffi,disabler-debug -p arxan-disabler-dll
       - run: cargo test -F ffi,disabler-debug
-      - run: cargo +nightly build -p launcher
+      - run: cargo +nightly-2025-01-31 build -p launcher
