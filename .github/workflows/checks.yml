@@ -13,8 +13,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      # temporarily use nightly 1.86.0 as the latest break dll-syringe, so
+      # the launcher won't boot.
       - run: |
-          rustup update nightly
+          rustup install nightly-2025-01-31
           rustup update stable
           rustup default stable
       - run: cargo build -p arxan-disabler -F ffi,disabler-debug -p arxan-disabler-dll
