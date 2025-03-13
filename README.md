@@ -39,7 +39,7 @@ unsafe fn my_entry_point() {
 C/C++, via static linking (features `disabler` and `ffi` need to be enabled):
 ```cpp
 #include <iostream>
-#include "disable_arxan_dsr.h"
+#include "arxan_disabler.h"
 
 void my_entry_point() {
     const char* context = "Arxan disabled!";
