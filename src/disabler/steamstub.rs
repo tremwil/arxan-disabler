@@ -106,8 +106,7 @@ pub unsafe fn schedule_after_steamstub(callback: impl FnOnce(u64) + Send + 'stat
                 call_ptr as *mut u8,
             )));
 
-            let hook = BareFnOnce::with_jit_alloc(
-                cc::C,
+            let hook = BareFnOnce::new_c_in(
                 move |entry| {
                     call_hook.unhook();
 
@@ -126,8 +125,7 @@ pub unsafe fn schedule_after_steamstub(callback: impl FnOnce(u64) + Send + 'stat
                     original_entry
                 },
                 game_code_buffer(),
-            )
-            .unwrap();
+            );
 
             call_hook.hook_with(hook.leak());
         },

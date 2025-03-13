@@ -129,16 +129,14 @@ pub trait ArxanDisabler: Default + Send + 'static {
                 let arxan_stub_hook =
                     &*Box::leak(Box::new(CallHook::new((arxan_entry + 4) as *mut u8)));
 
-                let detour = BareFnOnce::with_jit_alloc(
-                    cc::C,
+                let detour = BareFnOnce::new_c_in(
                     move || {
                         log::info!("Removing Arxan stub hook");
                         arxan_stub_hook.unhook();
                         instance.init_stub_hook(arxan_stub_hook.original(), user_callback);
                     },
                     game_code_buffer(),
-                )
-                .unwrap();
+                );
 
                 log::debug!("Detouring Arxan init stub");
                 arxan_stub_hook.hook_with(detour.leak());
