@@ -6,7 +6,7 @@ version: str = next(p["version"] for p in cargo_meta["packages"] if p["name"] ==
 with open("CHANGELOG.md", "r") as f:
     changelog = f.read()
 
-regex = re.compile(rf"\[{version.replace(".", "\\.")}][^\n]*\n+(.*?)\n\#\# ", re.S)
+regex = re.compile(f"\\[{version.replace(".", "\\.")}\\]" + r"[^\n]*\n+(.*?)\n\#\# ", re.S)
 changes = next(regex.finditer(changelog)).group(1)
 
 print(changes)
