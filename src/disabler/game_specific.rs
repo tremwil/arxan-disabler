@@ -19,3 +19,16 @@ impl ArxanDisabler for DSRArxanDisabler {
 }
 
 ffi_impl!(DSRArxanDisabler, disable_arxan_dsr);
+
+/// Arxan disabler for Dark Souls II SOTFS.
+///
+/// Only the latest version (1.03) of SOTFS is actively supported. Compatibility with
+/// other versions is highly likely but not guaranteed.
+#[derive(Default)]
+pub struct DS2ArxanDisabler;
+
+// We don't actually have to do anything special for DS2, it doesn't have any weird encrypted
+// data/functions
+impl ArxanDisabler for DS2ArxanDisabler {}
+
+ffi_impl!(DSRArxanDisabler, disable_arxan_ds2);
