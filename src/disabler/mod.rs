@@ -31,7 +31,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use call_hook::CallHook;
-use closure_ffi::{cc, BareFnOnce};
+use closure_ffi::BareFnOnce;
 use common::{find_and_patch_stubs, game_code_buffer, game_module, make_module_rwe};
 use steamstub::schedule_after_steamstub;
 

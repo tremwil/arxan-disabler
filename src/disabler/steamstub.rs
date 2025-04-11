@@ -1,6 +1,6 @@
 //! Provides utilities to hook around SteamStub V3.1 (as versionned by Steamless).
 //!
-//! SteamStub is used in DS3 and SDT. We must hook around it to be able to extract
+//! SteamStub is used in DS2, DS3 and SDT. We must hook around it to be able to extract
 //! the binary's original entry point (which in DS3's case will be the Arxan entry point)
 //! to then apply the arxan patches on that one.
 //!
@@ -27,7 +27,7 @@
 //!
 //! Which makes it quite easy to work around.
 
-use closure_ffi::{cc, BareFnOnce};
+use closure_ffi::BareFnOnce;
 use iced_x86::{Decoder, DecoderOptions, FlowControl};
 use pelite::{
     pe::{Pe, PeObject},
