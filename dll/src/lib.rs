@@ -45,6 +45,7 @@ pub unsafe extern "system" fn DllMain(
                 simplelog::LevelFilter::Trace,
                 simplelog::Config::default(),
                 File::options()
+                    .create(true)
                     .write(true)
                     .truncate(true)
                     .open("arxan-disabler-dll.log")
