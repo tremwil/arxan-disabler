@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "arxan-disabler"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bitvec",
  "closure-ffi",
