@@ -1,8 +1,15 @@
+# Deprecation notice
+
+This project is no longer being developed or maintained. A full rewrite that supports all 
+FromSoftware games is available [here](https://github.com/tremwil/dearxan).
+
+# arxan-disabler
+
 Provides a Rust library and static library with C bindings to disable the Arxan anti-debug/DRM
 from FromSoftware games.
 
-At the moment, only the latest Dark Souls Remastered is supported, but support for Dark Souls III,
-Elden Ring and Armored Core VI is also on the roadmap.
+~~At the moment, only the latest Dark Souls Remastered is supported, but support for Dark Souls III,
+Elden Ring and Armored Core VI is also on the roadmap.~~
 
 # Features
 The crate is feature gated and supports the following:
